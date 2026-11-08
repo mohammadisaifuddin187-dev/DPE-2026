@@ -2,12 +2,16 @@
 <!-- KI-generiert (Claude, Anthropic) - Beginn. Team 2 Materialversorgung, Pflege-Backoffice MVP, DPE WS 2026/27 (Prof. Stiehl). Verantwortlich im Team: offen (Team 2 legt fest). Lizenz: MIT. -->
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" xmlns:color="http://www.omg.org/spec/BPMN/non-normative/color/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_T2_Materialversorgung" targetNamespace="http://thi.de/dpe/team2" exporter="Team 2 (KI-unterstützt)" exporterVersion="1.0">
 <bpmn:collaboration id="Collab_T2_Materialversorgung">
+<bpmn:participant id="P_Prueflauf" name="Prüflauf (Team 2)" />
 <bpmn:participant id="P_PflegeApp" name="Pflege-App" />
+<bpmn:participant id="P_Esper" name="Ereignisverarbeitung (Esper)" />
 <bpmn:participant id="P_Materialversorgung" name="Materialversorgung (Team 2)" processRef="T2_Materialversorgung" />
 <bpmn:participant id="P_Lieferant" name="Lieferant (simuliert)" />
 <bpmn:participant id="P_Team3" name="Team 3 - Kommunikation, Fristen, Nachfassen" />
 <bpmn:participant id="P_Team1" name="Team 1 - Verwaltung und Erstattung" />
-<bpmn:messageFlow id="M00" name="Bestandsmeldung" sourceRef="P_PflegeApp" targetRef="Start_Manuell" />
+<bpmn:messageFlow id="M00a" name="Prüfauftrag" sourceRef="P_Prueflauf" targetRef="Start_Pruefung" />
+<bpmn:messageFlow id="M00b" name="Bestandsmeldung" sourceRef="P_PflegeApp" targetRef="Start_Manuell" />
+<bpmn:messageFlow id="M00c" name="Unterschreitung" sourceRef="P_Esper" targetRef="Start_Schwelle" />
 <bpmn:messageFlow id="M01" name="Bestellung" sourceRef="CA_Bestellabwicklung" targetRef="P_Lieferant" />
 <bpmn:messageFlow id="M02" name="Bestellantwort" sourceRef="P_Lieferant" targetRef="CA_Bestellabwicklung" />
 <bpmn:messageFlow id="M03" name="Nachfassauftrag" sourceRef="CA_Bestellabwicklung" targetRef="P_Team3" />
@@ -17,10 +21,10 @@
 <bpmn:messageFlow id="M07" name="Liefernachweis" sourceRef="CA_Vorgangsabschluss" targetRef="P_Team1" />
 </bpmn:collaboration>
 <bpmn:process id="T2_Materialversorgung" name="Materialversorgung" isExecutable="true" camunda:historyTimeToLive="P180D">
-<bpmn:documentation>Hauptprozess Team 2: Ausgewählte Verbrauchsprodukte rechtzeitig und kontrolliert nachversorgen (Teamauftrag 2, Abschnitt 4, Schritte 1-12). Eine Prozessinstanz = ein Nachversorgungsvorgang für ein Produkt eines Pflegehaushalts. Teilprozesse als Call Activities (Call by Value).</bpmn:documentation>
-<bpmn:startEvent id="Start_Manuell" name="Bestand manuell gemeldet"><bpmn:documentation>Nachrichtenstart: Die Pflegeperson meldet den Bestand über die Pflege-App (Nachricht PflegeApp_Bestandsmeldung_Team2).</bpmn:documentation><bpmn:outgoing>F01</bpmn:outgoing><bpmn:messageEventDefinition id="Start_Manuell_Def" messageRef="Msg_Bestandsmeldung" /></bpmn:startEvent>
-<bpmn:startEvent id="Start_Schwelle" name="Schwellenwert unterschritten"><bpmn:documentation>Bedingungsstart: erkannte Unterschreitung des vereinbarten Schwellenwerts.</bpmn:documentation><bpmn:outgoing>F06</bpmn:outgoing><bpmn:conditionalEventDefinition id="Start_Schwelle_Def"><bpmn:condition xsi:type="bpmn:tFormalExpression">${bestandMenge &lt; schwellenwert}</bpmn:condition></bpmn:conditionalEventDefinition></bpmn:startEvent>
-<bpmn:startEvent id="Start_Pruefung" name="Prüftermin erreicht (täglich 6 Uhr)"><bpmn:documentation>Projektannahme (nicht von Stiehl vorgegeben, im Integrationskreis bestätigen): täglicher Prüflauf um 6 Uhr. Annahme: ein Dienst startet je Haushalt und Produkt eine Instanz (offen, Stiehl).</bpmn:documentation><bpmn:outgoing>F02</bpmn:outgoing><bpmn:timerEventDefinition id="Start_Pruefung_Def"><bpmn:timeCycle xsi:type="bpmn:tFormalExpression">0 0 6 * * ?</bpmn:timeCycle></bpmn:timerEventDefinition></bpmn:startEvent>
+<bpmn:documentation>Hauptprozess Team 2: Ausgewählte Verbrauchsprodukte rechtzeitig und kontrolliert nachversorgen (Teamauftrag 2, Abschnitt 4, Schritte 1-12). Eine Prozessinstanz = ein Nachversorgungsvorgang für ein Produkt eines Pflegehaushalts. Drei Nachrichtenstarts (Prüflauf, Pflege-App, Esper), Teilprozesse als Call Activities (Call by Value).</bpmn:documentation>
+<bpmn:startEvent id="Start_Schwelle" name="Schwellenwert unterschritten"><bpmn:documentation>Nachrichtenstart: Esper (Ereignisverarbeitung) erkennt aus Bestands- und Verbrauchsereignissen die Unterschreitung des vereinbarten Schwellenwerts und meldet sie über Camel an den Prozess.</bpmn:documentation><bpmn:outgoing>F06</bpmn:outgoing><bpmn:messageEventDefinition id="Start_Schwelle_Def" messageRef="Msg_Schwellenwert" /></bpmn:startEvent>
+<bpmn:startEvent id="Start_Manuell" name="Bestand manuell gemeldet"><bpmn:documentation>Nachrichtenstart: Die Pflegeperson meldet den Bestand über die Pflege-App.</bpmn:documentation><bpmn:outgoing>F01</bpmn:outgoing><bpmn:messageEventDefinition id="Start_Manuell_Def" messageRef="Msg_Bestandsmeldung" /></bpmn:startEvent>
+<bpmn:startEvent id="Start_Pruefung" name="Prüfung angestoßen"><bpmn:documentation>Nachrichtenstart: Der Prozess "Prüflauf" (T2_Prueflauf) sendet je fälligem Versorgungsprofil einen Prüfauftrag. So entsteht je Haushalt und Produkt genau eine Instanz (Instanz-Ausrichtung nach Stiehl).</bpmn:documentation><bpmn:outgoing>F02</bpmn:outgoing><bpmn:messageEventDefinition id="Start_Pruefung_Def" messageRef="Msg_Pruefauftrag" /></bpmn:startEvent>
 <bpmn:callActivity id="CA_Bestandsabfrage" name="Bestandsabfrage" calledElement="T2_Bestandsabfrage" camunda:calledElementBinding="latest"><bpmn:extensionElements><camunda:in businessKey="#{execution.processBusinessKey}" /><camunda:in source="pflegehaushaltId" target="pflegehaushaltId" /><camunda:in source="vorgangId" target="vorgangId" /><camunda:in source="produktId" target="produktId" /><camunda:out source="bestandMenge" target="bestandMenge" /><camunda:out source="bestandZeitpunkt" target="bestandZeitpunkt" /></bpmn:extensionElements><bpmn:incoming>F02</bpmn:incoming><bpmn:outgoing>F03</bpmn:outgoing></bpmn:callActivity>
 <bpmn:boundaryEvent id="B_Meldefrist" name="Meldefrist abgelaufen (3 Tage)" attachedToRef="CA_Bestandsabfrage"><bpmn:documentation>Projektannahme (nicht von Stiehl vorgegeben, im Integrationskreis bestätigen): endgültige Meldefrist 3 Tage (unterbrechender Timer am Teilprozess).</bpmn:documentation><bpmn:outgoing>F04</bpmn:outgoing><bpmn:timerEventDefinition id="B_Meldefrist_Def"><bpmn:timeDuration xsi:type="bpmn:tFormalExpression">P3D</bpmn:timeDuration></bpmn:timerEventDefinition></bpmn:boundaryEvent>
 <bpmn:endEvent id="End_KeineMeldung" name="Keine Bestandsmeldung"><bpmn:incoming>F04</bpmn:incoming></bpmn:endEvent>
@@ -61,69 +65,71 @@
 <bpmn:sequenceFlow id="F19" sourceRef="GW_Lieferung" targetRef="CA_Vorgangsabschluss" name="Lieferung abgeschlossen"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${lieferpruefungErgebnis == 'Lieferung abgeschlossen'}</bpmn:conditionExpression></bpmn:sequenceFlow>
 <bpmn:sequenceFlow id="F20" sourceRef="GW_Lieferung" targetRef="End_Ungeklaert" name="Lieferung ungeklärt"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${lieferpruefungErgebnis == 'Lieferung ungeklärt'}</bpmn:conditionExpression></bpmn:sequenceFlow>
 <bpmn:sequenceFlow id="F21" sourceRef="CA_Vorgangsabschluss" targetRef="End_Abgeschlossen"></bpmn:sequenceFlow>
-<bpmn:textAnnotation id="Anm_Timerstart"><bpmn:text>Annahme: ein Dienst startet je Haushalt und Produkt eine Instanz (offen, Stiehl)</bpmn:text></bpmn:textAnnotation>
-<bpmn:association id="Anm_Timerstart_Assoc" associationDirection="None" sourceRef="Start_Pruefung" targetRef="Anm_Timerstart" />
 </bpmn:process>
+<bpmn:message id="Msg_Pruefauftrag" name="Prueflauf_Pruefauftrag_Team2" />
 <bpmn:message id="Msg_Bestandsmeldung" name="PflegeApp_Bestandsmeldung_Team2" />
+<bpmn:message id="Msg_Schwellenwert" name="Esper_Schwellenwertunterschreitung_Team2" />
 <bpmndi:BPMNDiagram id="BPMNDiagram_1"><bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collab_T2_Materialversorgung">
-<bpmndi:BPMNShape id="P_PflegeApp_di" bpmnElement="P_PflegeApp" isHorizontal="true"><dc:Bounds x="120" y="20" width="2470" height="60" /></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="P_Materialversorgung_di" bpmnElement="P_Materialversorgung" isHorizontal="true"><dc:Bounds x="120" y="120" width="2470" height="500" /></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="P_Lieferant_di" bpmnElement="P_Lieferant" isHorizontal="true"><dc:Bounds x="120" y="700" width="2470" height="60" /></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="P_Team3_di" bpmnElement="P_Team3" isHorizontal="true"><dc:Bounds x="120" y="800" width="2470" height="60" /></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="P_Team1_di" bpmnElement="P_Team1" isHorizontal="true"><dc:Bounds x="120" y="900" width="2470" height="60" /></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="Start_Manuell_di" bpmnElement="Start_Manuell" bioc:stroke="#616161" bioc:fill="#E0E0E0" color:background-color="#E0E0E0" color:border-color="#616161"><dc:Bounds x="187" y="342" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="160" y="382" width="90" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="Start_Schwelle_di" bpmnElement="Start_Schwelle"><dc:Bounds x="282" y="212" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="250" y="252" width="100" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="Start_Pruefung_di" bpmnElement="Start_Pruefung"><dc:Bounds x="212" y="482" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="170" y="440" width="120" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="CA_Bestandsabfrage_di" bpmnElement="CA_Bestandsabfrage"><dc:Bounds x="310" y="460" width="180" height="80" /></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="B_Meldefrist_di" bpmnElement="B_Meldefrist"><dc:Bounds x="422" y="442" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="316" y="412" width="100" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="End_KeineMeldung_di" bpmnElement="End_KeineMeldung"><dc:Bounds x="492" y="407" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="460" y="378" width="100" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="GW_Start_di" bpmnElement="GW_Start" isMarkerVisible="true"><dc:Bounds x="555" y="335" width="50" height="50" /></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="CA_Bedarfsermittlung_di" bpmnElement="CA_Bedarfsermittlung"><dc:Bounds x="670" y="320" width="180" height="80" /></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="GW_Bedarf_di" bpmnElement="GW_Bedarf" isMarkerVisible="true"><dc:Bounds x="915" y="335" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="862" y="286" width="72" height="42" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="End_Ausreichend_di" bpmnElement="End_Ausreichend"><dc:Bounds x="922" y="472" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="964" y="476" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="CA_Bestellfreigabe_di" bpmnElement="CA_Bestellfreigabe"><dc:Bounds x="1055" y="320" width="180" height="80" /></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="GW_Freigabe_di" bpmnElement="GW_Freigabe" isMarkerVisible="true"><dc:Bounds x="1300" y="335" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="1243" y="394" width="72" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="End_NichtFreigegeben_di" bpmnElement="End_NichtFreigegeben"><dc:Bounds x="1307" y="212" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1221" y="216" width="82" height="42" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="End_KeineEinigung_di" bpmnElement="End_KeineEinigung"><dc:Bounds x="1382" y="212" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1424" y="223" width="84" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="End_NichtZulaessig_di" bpmnElement="End_NichtZulaessig"><dc:Bounds x="1307" y="502" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1349" y="506" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="CA_Bestellabwicklung_di" bpmnElement="CA_Bestellabwicklung"><dc:Bounds x="1470" y="320" width="180" height="80" /></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="GW_Bestellung_di" bpmnElement="GW_Bestellung" isMarkerVisible="true"><dc:Bounds x="1715" y="335" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="1700" y="389" width="80" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="CA_Lieferpruefung_di" bpmnElement="CA_Lieferpruefung"><dc:Bounds x="1855" y="320" width="180" height="80" /></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="GW_Lieferung_di" bpmnElement="GW_Lieferung" isMarkerVisible="true"><dc:Bounds x="2100" y="335" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="2085" y="389" width="80" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="End_Ungeklaert_di" bpmnElement="End_Ungeklaert"><dc:Bounds x="2107" y="212" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="2149" y="216" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="CA_Vorgangsabschluss_di" bpmnElement="CA_Vorgangsabschluss"><dc:Bounds x="2240" y="320" width="180" height="80" /></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="End_Abgeschlossen_di" bpmnElement="End_Abgeschlossen"><dc:Bounds x="2482" y="342" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="2455" y="382" width="90" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="Anm_Timerstart_di" bpmnElement="Anm_Timerstart"><dc:Bounds x="160" y="565" width="290" height="40" /></bpmndi:BPMNShape>
-<bpmndi:BPMNEdge id="Anm_Timerstart_Assoc_di" bpmnElement="Anm_Timerstart_Assoc"><di:waypoint x="230" y="518" /><di:waypoint x="230" y="565" /></bpmndi:BPMNEdge>
-<bpmndi:BPMNEdge id="F01_di" bpmnElement="F01"><di:waypoint x="223" y="360" /><di:waypoint x="555" y="360" /></bpmndi:BPMNEdge>
-<bpmndi:BPMNEdge id="F02_di" bpmnElement="F02"><di:waypoint x="248" y="500" /><di:waypoint x="310" y="500" /></bpmndi:BPMNEdge>
-<bpmndi:BPMNEdge id="F03_di" bpmnElement="F03"><di:waypoint x="490" y="500" /><di:waypoint x="580" y="500" /><di:waypoint x="580" y="385" /></bpmndi:BPMNEdge>
-<bpmndi:BPMNEdge id="F04_di" bpmnElement="F04"><di:waypoint x="440" y="442" /><di:waypoint x="440" y="425" /><di:waypoint x="492" y="425" /></bpmndi:BPMNEdge>
-<bpmndi:BPMNEdge id="F06_di" bpmnElement="F06"><di:waypoint x="318" y="230" /><di:waypoint x="580" y="230" /><di:waypoint x="580" y="335" /></bpmndi:BPMNEdge>
-<bpmndi:BPMNEdge id="F07_di" bpmnElement="F07"><di:waypoint x="605" y="360" /><di:waypoint x="670" y="360" /></bpmndi:BPMNEdge>
-<bpmndi:BPMNEdge id="F08_di" bpmnElement="F08"><di:waypoint x="850" y="360" /><di:waypoint x="915" y="360" /></bpmndi:BPMNEdge>
-<bpmndi:BPMNEdge id="F09_di" bpmnElement="F09"><di:waypoint x="965" y="360" /><di:waypoint x="1055" y="360" /><bpmndi:BPMNLabel><dc:Bounds x="968" y="314" width="84" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
-<bpmndi:BPMNEdge id="F10_di" bpmnElement="F10"><di:waypoint x="940" y="385" /><di:waypoint x="940" y="472" /><bpmndi:BPMNLabel><dc:Bounds x="952" y="404" width="70" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
-<bpmndi:BPMNEdge id="F11_di" bpmnElement="F11"><di:waypoint x="1235" y="360" /><di:waypoint x="1300" y="360" /></bpmndi:BPMNEdge>
-<bpmndi:BPMNEdge id="F12_di" bpmnElement="F12"><di:waypoint x="1350" y="360" /><di:waypoint x="1470" y="360" /><bpmndi:BPMNLabel><dc:Bounds x="1366" y="372" width="90" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
-<bpmndi:BPMNEdge id="F13_di" bpmnElement="F13"><di:waypoint x="1325" y="335" /><di:waypoint x="1325" y="248" /><bpmndi:BPMNLabel><dc:Bounds x="1235" y="262" width="80" height="42" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
-<bpmndi:BPMNEdge id="F13b_di" bpmnElement="F13b"><di:waypoint x="1336" y="346" /><di:waypoint x="1400" y="346" /><di:waypoint x="1400" y="248" /><bpmndi:BPMNLabel><dc:Bounds x="1410" y="276" width="70" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
-<bpmndi:BPMNEdge id="F14_di" bpmnElement="F14"><di:waypoint x="1325" y="385" /><di:waypoint x="1325" y="502" /><bpmndi:BPMNLabel><dc:Bounds x="1337" y="430" width="70" height="42" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
-<bpmndi:BPMNEdge id="F15_di" bpmnElement="F15"><di:waypoint x="1650" y="360" /><di:waypoint x="1715" y="360" /></bpmndi:BPMNEdge>
-<bpmndi:BPMNEdge id="F16_di" bpmnElement="F16"><di:waypoint x="1765" y="360" /><di:waypoint x="1855" y="360" /><bpmndi:BPMNLabel><dc:Bounds x="1768" y="314" width="84" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
-<bpmndi:BPMNEdge id="F17_di" bpmnElement="F17"><di:waypoint x="1740" y="335" /><di:waypoint x="1740" y="170" /><di:waypoint x="1145" y="170" /><di:waypoint x="1145" y="320" /><bpmndi:BPMNLabel><dc:Bounds x="1750" y="250" width="64" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
-<bpmndi:BPMNEdge id="F18_di" bpmnElement="F18"><di:waypoint x="2035" y="360" /><di:waypoint x="2100" y="360" /></bpmndi:BPMNEdge>
-<bpmndi:BPMNEdge id="F19_di" bpmnElement="F19"><di:waypoint x="2150" y="360" /><di:waypoint x="2240" y="360" /><bpmndi:BPMNLabel><dc:Bounds x="2153" y="314" width="84" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
-<bpmndi:BPMNEdge id="F20_di" bpmnElement="F20"><di:waypoint x="2125" y="335" /><di:waypoint x="2125" y="248" /><bpmndi:BPMNLabel><dc:Bounds x="2135" y="272" width="64" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
-<bpmndi:BPMNEdge id="F21_di" bpmnElement="F21"><di:waypoint x="2420" y="360" /><di:waypoint x="2482" y="360" /></bpmndi:BPMNEdge>
-<bpmndi:BPMNEdge id="M00_di" bpmnElement="M00"><di:waypoint x="205" y="80" /><di:waypoint x="205" y="342" /><bpmndi:BPMNLabel><dc:Bounds x="215" y="92" width="90" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
-<bpmndi:BPMNEdge id="M01_di" bpmnElement="M01"><di:waypoint x="1500" y="400" /><di:waypoint x="1500" y="700" /><bpmndi:BPMNLabel><dc:Bounds x="1432" y="652" width="58" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
-<bpmndi:BPMNEdge id="M02_di" bpmnElement="M02"><di:waypoint x="1540" y="700" /><di:waypoint x="1540" y="400" /><bpmndi:BPMNLabel><dc:Bounds x="1550" y="652" width="80" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
-<bpmndi:BPMNEdge id="M03_di" bpmnElement="M03"><di:waypoint x="1635" y="400" /><di:waypoint x="1635" y="800" /><bpmndi:BPMNLabel><dc:Bounds x="1645" y="772" width="88" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
-<bpmndi:BPMNEdge id="M04_di" bpmnElement="M04"><di:waypoint x="1895" y="700" /><di:waypoint x="1895" y="400" /><bpmndi:BPMNLabel><dc:Bounds x="1805" y="652" width="80" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
-<bpmndi:BPMNEdge id="M05_di" bpmnElement="M05"><di:waypoint x="1945" y="400" /><di:waypoint x="1945" y="800" /><bpmndi:BPMNLabel><dc:Bounds x="1849" y="772" width="86" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
-<bpmndi:BPMNEdge id="M06_di" bpmnElement="M06"><di:waypoint x="1995" y="800" /><di:waypoint x="1995" y="400" /><bpmndi:BPMNLabel><dc:Bounds x="2005" y="772" width="90" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
-<bpmndi:BPMNEdge id="M07_di" bpmnElement="M07"><di:waypoint x="2330" y="400" /><di:waypoint x="2330" y="900" /><bpmndi:BPMNLabel><dc:Bounds x="2340" y="652" width="80" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNShape id="P_Prueflauf_di" bpmnElement="P_Prueflauf" isHorizontal="true"><dc:Bounds x="120" y="10" width="2470" height="50" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="P_PflegeApp_di" bpmnElement="P_PflegeApp" isHorizontal="true"><dc:Bounds x="230" y="70" width="2360" height="50" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="P_Esper_di" bpmnElement="P_Esper" isHorizontal="true"><dc:Bounds x="300" y="130" width="2290" height="50" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="P_Materialversorgung_di" bpmnElement="P_Materialversorgung" isHorizontal="true"><dc:Bounds x="120" y="200" width="2470" height="500" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="P_Lieferant_di" bpmnElement="P_Lieferant" isHorizontal="true"><dc:Bounds x="120" y="780" width="2470" height="60" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="P_Team3_di" bpmnElement="P_Team3" isHorizontal="true"><dc:Bounds x="120" y="880" width="2470" height="60" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="P_Team1_di" bpmnElement="P_Team1" isHorizontal="true"><dc:Bounds x="120" y="980" width="2470" height="60" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Start_Schwelle_di" bpmnElement="Start_Schwelle" bioc:stroke="#616161" bioc:fill="#E0E0E0" color:background-color="#E0E0E0" color:border-color="#616161"><dc:Bounds x="312" y="292" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="352" y="330" width="100" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Start_Manuell_di" bpmnElement="Start_Manuell" bioc:stroke="#616161" bioc:fill="#E0E0E0" color:background-color="#E0E0E0" color:border-color="#616161"><dc:Bounds x="242" y="422" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="270" y="398" width="90" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Start_Pruefung_di" bpmnElement="Start_Pruefung" bioc:stroke="#616161" bioc:fill="#E0E0E0" color:background-color="#E0E0E0" color:border-color="#616161"><dc:Bounds x="182" y="562" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="160" y="602" width="80" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="CA_Bestandsabfrage_di" bpmnElement="CA_Bestandsabfrage"><dc:Bounds x="310" y="540" width="180" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="B_Meldefrist_di" bpmnElement="B_Meldefrist"><dc:Bounds x="422" y="522" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="316" y="492" width="100" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="End_KeineMeldung_di" bpmnElement="End_KeineMeldung"><dc:Bounds x="492" y="487" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="460" y="458" width="100" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="GW_Start_di" bpmnElement="GW_Start" isMarkerVisible="true"><dc:Bounds x="555" y="415" width="50" height="50" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="CA_Bedarfsermittlung_di" bpmnElement="CA_Bedarfsermittlung"><dc:Bounds x="670" y="400" width="180" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="GW_Bedarf_di" bpmnElement="GW_Bedarf" isMarkerVisible="true"><dc:Bounds x="915" y="415" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="862" y="366" width="72" height="42" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="End_Ausreichend_di" bpmnElement="End_Ausreichend"><dc:Bounds x="922" y="552" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="964" y="556" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="CA_Bestellfreigabe_di" bpmnElement="CA_Bestellfreigabe"><dc:Bounds x="1055" y="400" width="180" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="GW_Freigabe_di" bpmnElement="GW_Freigabe" isMarkerVisible="true"><dc:Bounds x="1300" y="415" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="1243" y="474" width="72" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="End_NichtFreigegeben_di" bpmnElement="End_NichtFreigegeben"><dc:Bounds x="1307" y="292" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1221" y="296" width="82" height="42" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="End_KeineEinigung_di" bpmnElement="End_KeineEinigung"><dc:Bounds x="1382" y="292" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1424" y="303" width="84" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="End_NichtZulaessig_di" bpmnElement="End_NichtZulaessig"><dc:Bounds x="1307" y="582" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1349" y="586" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="CA_Bestellabwicklung_di" bpmnElement="CA_Bestellabwicklung"><dc:Bounds x="1470" y="400" width="180" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="GW_Bestellung_di" bpmnElement="GW_Bestellung" isMarkerVisible="true"><dc:Bounds x="1715" y="415" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="1700" y="469" width="80" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="CA_Lieferpruefung_di" bpmnElement="CA_Lieferpruefung"><dc:Bounds x="1855" y="400" width="180" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="GW_Lieferung_di" bpmnElement="GW_Lieferung" isMarkerVisible="true"><dc:Bounds x="2100" y="415" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="2085" y="469" width="80" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="End_Ungeklaert_di" bpmnElement="End_Ungeklaert"><dc:Bounds x="2107" y="292" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="2149" y="296" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="CA_Vorgangsabschluss_di" bpmnElement="CA_Vorgangsabschluss"><dc:Bounds x="2240" y="400" width="180" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="End_Abgeschlossen_di" bpmnElement="End_Abgeschlossen"><dc:Bounds x="2482" y="422" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="2455" y="462" width="90" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNEdge id="F01_di" bpmnElement="F01"><di:waypoint x="278" y="440" /><di:waypoint x="555" y="440" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F02_di" bpmnElement="F02"><di:waypoint x="218" y="580" /><di:waypoint x="310" y="580" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F03_di" bpmnElement="F03"><di:waypoint x="490" y="580" /><di:waypoint x="580" y="580" /><di:waypoint x="580" y="465" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F04_di" bpmnElement="F04"><di:waypoint x="440" y="522" /><di:waypoint x="440" y="505" /><di:waypoint x="492" y="505" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F06_di" bpmnElement="F06"><di:waypoint x="348" y="310" /><di:waypoint x="580" y="310" /><di:waypoint x="580" y="415" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F07_di" bpmnElement="F07"><di:waypoint x="605" y="440" /><di:waypoint x="670" y="440" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F08_di" bpmnElement="F08"><di:waypoint x="850" y="440" /><di:waypoint x="915" y="440" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F09_di" bpmnElement="F09"><di:waypoint x="965" y="440" /><di:waypoint x="1055" y="440" /><bpmndi:BPMNLabel><dc:Bounds x="968" y="394" width="84" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F10_di" bpmnElement="F10"><di:waypoint x="940" y="465" /><di:waypoint x="940" y="552" /><bpmndi:BPMNLabel><dc:Bounds x="952" y="484" width="70" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F11_di" bpmnElement="F11"><di:waypoint x="1235" y="440" /><di:waypoint x="1300" y="440" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F12_di" bpmnElement="F12"><di:waypoint x="1350" y="440" /><di:waypoint x="1470" y="440" /><bpmndi:BPMNLabel><dc:Bounds x="1366" y="452" width="90" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F13_di" bpmnElement="F13"><di:waypoint x="1325" y="415" /><di:waypoint x="1325" y="328" /><bpmndi:BPMNLabel><dc:Bounds x="1235" y="342" width="80" height="42" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F13b_di" bpmnElement="F13b"><di:waypoint x="1336" y="426" /><di:waypoint x="1400" y="426" /><di:waypoint x="1400" y="328" /><bpmndi:BPMNLabel><dc:Bounds x="1410" y="356" width="70" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F14_di" bpmnElement="F14"><di:waypoint x="1325" y="465" /><di:waypoint x="1325" y="582" /><bpmndi:BPMNLabel><dc:Bounds x="1337" y="510" width="70" height="42" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F15_di" bpmnElement="F15"><di:waypoint x="1650" y="440" /><di:waypoint x="1715" y="440" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F16_di" bpmnElement="F16"><di:waypoint x="1765" y="440" /><di:waypoint x="1855" y="440" /><bpmndi:BPMNLabel><dc:Bounds x="1768" y="394" width="84" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F17_di" bpmnElement="F17"><di:waypoint x="1740" y="415" /><di:waypoint x="1740" y="250" /><di:waypoint x="1145" y="250" /><di:waypoint x="1145" y="400" /><bpmndi:BPMNLabel><dc:Bounds x="1750" y="330" width="64" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F18_di" bpmnElement="F18"><di:waypoint x="2035" y="440" /><di:waypoint x="2100" y="440" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F19_di" bpmnElement="F19"><di:waypoint x="2150" y="440" /><di:waypoint x="2240" y="440" /><bpmndi:BPMNLabel><dc:Bounds x="2153" y="394" width="84" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F20_di" bpmnElement="F20"><di:waypoint x="2125" y="415" /><di:waypoint x="2125" y="328" /><bpmndi:BPMNLabel><dc:Bounds x="2135" y="352" width="64" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F21_di" bpmnElement="F21"><di:waypoint x="2420" y="440" /><di:waypoint x="2482" y="440" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="M00a_di" bpmnElement="M00a"><di:waypoint x="200" y="60" /><di:waypoint x="200" y="562" /><bpmndi:BPMNLabel><dc:Bounds x="206" y="550" width="66" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="M00b_di" bpmnElement="M00b"><di:waypoint x="260" y="120" /><di:waypoint x="260" y="422" /><bpmndi:BPMNLabel><dc:Bounds x="266" y="365" width="92" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="M00c_di" bpmnElement="M00c"><di:waypoint x="330" y="180" /><di:waypoint x="330" y="292" /><bpmndi:BPMNLabel><dc:Bounds x="336" y="222" width="90" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="M01_di" bpmnElement="M01"><di:waypoint x="1500" y="480" /><di:waypoint x="1500" y="780" /><bpmndi:BPMNLabel><dc:Bounds x="1432" y="732" width="58" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="M02_di" bpmnElement="M02"><di:waypoint x="1540" y="780" /><di:waypoint x="1540" y="480" /><bpmndi:BPMNLabel><dc:Bounds x="1550" y="732" width="80" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="M03_di" bpmnElement="M03"><di:waypoint x="1635" y="480" /><di:waypoint x="1635" y="880" /><bpmndi:BPMNLabel><dc:Bounds x="1645" y="852" width="88" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="M04_di" bpmnElement="M04"><di:waypoint x="1895" y="780" /><di:waypoint x="1895" y="480" /><bpmndi:BPMNLabel><dc:Bounds x="1805" y="732" width="80" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="M05_di" bpmnElement="M05"><di:waypoint x="1945" y="480" /><di:waypoint x="1945" y="880" /><bpmndi:BPMNLabel><dc:Bounds x="1849" y="852" width="86" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="M06_di" bpmnElement="M06"><di:waypoint x="1995" y="880" /><di:waypoint x="1995" y="480" /><bpmndi:BPMNLabel><dc:Bounds x="2005" y="852" width="90" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="M07_di" bpmnElement="M07"><di:waypoint x="2330" y="480" /><di:waypoint x="2330" y="980" /><bpmndi:BPMNLabel><dc:Bounds x="2340" y="732" width="80" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
 </bpmndi:BPMNPlane></bpmndi:BPMNDiagram>
 </bpmn:definitions>
 <!-- Ende des KI-generierten Teils -->
