@@ -2,13 +2,13 @@
 
 > **KI-Kennzeichnung (Kursregel):** Modelle, Bilder und dieser Text wurden mit KI-Unterstützung erstellt (Claude, Anthropic) und müssen von Team 2 geprüft werden. Wer im Team welchen Teil verantwortet, ist noch offen. Das Team trägt es in die `documentation` der Prozesse und hier ein.
 >
-> **Stand:** 08.11.2026. **Grundlage:** Teamauftrag 2, Gemeinsames Projekthandbuch, Integrations- und Organisationspaket (alle v1.0, 20.10.2026) und die Vorlesung „BPMN Best Practices“ (Method & Style). **Technik:** CIB seven (Camunda 7), External Tasks, JUEL. DMN, Simulator und Tests kommen später.
+> **Stand:** 08.11.2026 (Abend). **Grundlage:** Teamauftrag 2, Gemeinsames Projekthandbuch, Integrations- und Organisationspaket (alle v1.0, 20.10.2026) und die Vorlesung „BPMN Best Practices“ (Method & Style). **Technik:** CIB seven (Camunda 7), External Tasks, JUEL. DMN, Simulator und Tests kommen später.
 
 ## Überblick
 
 | Datei | Inhalt | Teamauftrag-Schritte |
 |---|---|---|
-| `T2_Materialversorgung.bpmn` | **Hauptprozess** (6 Call Activities) | 1–12 |
+| `T2_Materialversorgung.bpmn` | **Hauptprozess** (6 Call Activities, 3 Starts, 7 Endzustände) | 1–12 |
 | `T2_Bestandsabfrage.bpmn` | Bestand anfragen, melden, erinnern | 1 |
 | `T2_Bedarfsermittlung.bpmn` | Reichweite berechnen, Bedarf feststellen | 2–3 |
 | `T2_Bestellfreigabe.bpmn` | Vorschlag, Abweichungen, Berechtigungsregel, Kundenentscheidung | 4–7 |
@@ -24,7 +24,7 @@ Eine Instanz entspricht einem Nachversorgungsvorgang für ein Produkt eines Pfle
 ## Prozessgrenze
 - **Start (3 Auslöser laut Teamauftrag):**
   - Timer „Prüftermin erreicht“ (geplanter Termin)
-  - None-Start „Bestand manuell gemeldet“
+  - Nachrichtenstart „Bestand manuell gemeldet“ (Nachricht `Bestandsmeldung` aus dem Blackbox-Pool „Pflege-App“)
   - Bedingungsstart „Schwellenwert unterschritten“
 - **Endzustände (Hauptprozess):**
 
@@ -35,6 +35,7 @@ Eine Instanz entspricht einem Nachversorgungsvorgang für ein Produkt eines Pfle
 | Keine Bestandsmeldung | Abgebrochen |
 | Bestellung nicht freigegeben | Erfolglos abgeschlossen (Reichweitenrisiko mitgeteilt) |
 | Bestellung nicht zulässig | Erfolglos abgeschlossen (Begründung der Prüfstelle) |
+| Keine Einigung | Erfolglos abgeschlossen (nach 3 Vorschlägen keine Freigabe) |
 | Lieferung ungeklärt | Übergeben (an die menschliche Prüfstelle) |
 
 Die Zuordnung zu den Zuständen ist ein Vorschlag für den Integrationskreis.
@@ -50,6 +51,7 @@ Die Zuordnung zu den Zuständen ist ein Vorschlag für den Integrationskreis.
 | Lieferant antwortet nicht | Bestellabwicklung: Antwortfrist → Nachfassen über Team 3 → nach erneuter Frist „Ersatz erforderlich“ |
 | Teil- oder Falschlieferung | Lieferprüfung: „Abweichung festgestellt“ → Klärung über Team 3, Status bleibt offen |
 | Kunde lehnt ab oder verschiebt | Kundenentscheidung „Nicht freigegeben“ → „Reichweitenrisiko mitteilen“, keine Bestellung |
+| *(Ergänzung)* Kunde wünscht immer wieder Änderungen | Bestellfreigabe: höchstens 3 Vorschläge, danach Ende „Keine Einigung“ |
 | Lieferung bleibt unbestätigt | Lieferprüfung: Bestätigungsfrist → Klärung, sonst „Lieferung ungeklärt“, nie automatisch erfolgreich |
 
 ## Umgesetzte Best Practices (Stiehl, Method & Style)
@@ -60,7 +62,7 @@ Die Zuordnung zu den Zuständen ist ein Vorschlag für den Integrationskreis.
 - **Benennung:** Aktivitäten nach Objekt + Verb, Ereignisse nach Objekt + Partizip, Endzustände getrennt und eindeutig (Regeln 7, 8, 16, 17). Gateways sind als Frage benannt, alle Ausgänge beschriftet.
 - **Gateway entscheidet nicht (Regel 20):** Davor liegt immer eine Aufgabe oder Regel, die das Ergebnis erzeugt.
 - **Warten mit Erinnern:** nicht unterbrechender Timer an der Aufgabe, endgültige Frist als unterbrechender Timer. „Keine Antwort“ ist nie eine Freigabe.
-- **Integration orange markiert:** Senden, Empfangen, Aufträge an andere Teams.
+- **Integration grau markiert:** Senden, Empfangen, Aufträge an andere Teams.
 - **Pflichtpunkte aus den Projektvorgaben:** Sendeaufgabe „Bestellung übermitteln“ schreibt in eine JMS-Queue (Camel/CBR). Nachrichten-Zwischenereignis „Bestellantwort empfangen“ empfängt die Backend-Antwort über Camel.
 - **Bewusste Abweichung von Regel 19:** Ein sammelndes XOR steht vor „Bedarfsermittlung“ (3 Starts) und vor „Klärung beauftragen“ (3 Auslöser). Grund ist unsere Projektregel: höchstens 2 Linien in eine Aufgabe.
 
@@ -68,6 +70,7 @@ Die Zuordnung zu den Zuständen ist ein Vorschlag für den Integrationskreis.
 
 | Richtung | Nachricht / Funktion | Element |
 |---|---|---|
+| Pflege-App → Team 2 | `PflegeApp_Bestandsmeldung_Team2` (manuelle Bestandsmeldung) | Nachrichtenstart im Hauptprozess |
 | Team 2 → Lieferant (simuliert) | `Bestellung` (JMS) | Sendeaufgabe, Topic `t2-bestellung-senden` |
 | Lieferant → Team 2 | `Lieferant_Bestellantwort_Team2` (Status `BESTAETIGT`/`NICHT_VERFUEGBAR`) | Nachrichten-Zwischenereignis |
 | Lieferant → Team 2 | `Lieferant_Versandmeldung_Team2` | Empfangsaufgabe |
@@ -82,8 +85,18 @@ Jede teamübergreifende Nachricht soll den gemeinsamen Ereignisrahmen tragen (In
 
 ## Projektannahmen – nicht von Stiehl vorgegeben
 - Fristen: Erinnerung 1 Tag, Meldefrist 3 Tage, Antwortfrist Kunde 3 Tage, Antwortfrist Lieferant 1 Tag (einmal nachfassen), Versandfrist 5 Tage, Bestätigungsfrist 3 Tage. Prüftermin täglich um 6 Uhr. Die Werte werden später konfigurierbar (DMN „Fristen“).
+- Höchstens 3 Vorschläge je Bestellfreigabe (Zähler `anzahlVorschlaege`), danach Ende „Keine Einigung“.
+- Timer-Start: Ein Dienst startet je Haushalt und Produkt eine Instanz (Anmerkung am Timer-Start, offen bei Stiehl).
 - Bei Ausbleiben der Lieferanten-Antwort wird einmal über Team 3 nachgefasst, danach gilt „Ersatz erforderlich“.
 - Fristen der Klärung führt Team 3 (gemeinsamer Baustein). Team 2 wartet auf das Klärungsergebnis.
+
+## Offene Fragen für den Meilenstein (09.11.2026)
+
+| Nr | Frage | Unser Vorschlag | Begründung |
+|---|---|---|---|
+| 1 | **Pflegeperson als Bahn (Lane) oder als eigener Pool?** | Bahn im eigenen Pool für ihre Aufgaben (Bestand melden, Freigabe entscheiden, Lieferung prüfen). Die App, über die sie Meldungen schickt, wird im Hauptprozess als Blackbox-Pool „Pflege-App“ gezeigt. | Teamauftrag 4.1: Kundenentscheidungen werden als menschliche Aufgaben modelliert. Diese Aufgaben laufen in unserer Engine (Tasklist), also gehören sie in unseren Pool (Stiehl, Regel 5). Eigene Pools sind laut Regel 3 für externe Organisationen gedacht. |
+| 2 | **Timer-Start: Wie entsteht je Haushalt und Produkt eine Instanz?** | Ein Dienst prüft täglich um 6 Uhr alle fälligen Versorgungsprofile und startet je Haushalt und Produkt eine eigene Instanz. Im Modell steht das als Anmerkung am Timer-Start. | Ein Timer-Start allein erzeugt nur eine Instanz pro Zeitpunkt. Die 1:1-Zuordnung Instanz = Vorgang (Handbuch 5.2, Method & Style „Instance Alignment“) braucht deshalb einen Startdienst. |
+| 3 | **Sammelndes XOR vor einer Aufgabe oder Stiehls Regel 19?** | Sammelndes XOR beibehalten, wo 3 Linien zusammenkommen (vor „Bedarfsermittlung“ und „Klärung beauftragen“). Bei höchstens 2 Linien führen sie direkt in die Aufgabe, ganz nach Regel 19. | Unsere Projektregel erlaubt höchstens 2 Linien in eine Aufgabe, damit das Bild lesbar bleibt. Regel 19 empfiehlt direkte Linien ohne XOR. Wir bitten Stiehl um Bestätigung, welche Variante er bewertet. |
 
 ## Offen (Stiehl/Integrationskreis)
 - Instanz-Definition, gemeinsame Kennungen (`PH-…`, `VG-T2-…`) und Nachrichtenformate

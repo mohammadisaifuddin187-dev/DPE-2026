@@ -23,7 +23,7 @@
 <bpmndi:BPMNShape id="P_Team1_di" bpmnElement="P_Team1" isHorizontal="true"><dc:Bounds x="120" y="340" width="820" height="60" /></bpmndi:BPMNShape>
 <bpmndi:BPMNShape id="Start_di" bpmnElement="Start"><dc:Bounds x="187" y="162" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="160" y="202" width="90" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
 <bpmndi:BPMNShape id="T_Fortschreiben_di" bpmnElement="T_Fortschreiben"><dc:Bounds x="270" y="140" width="140" height="80" /></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="S_Nachweis_di" bpmnElement="S_Nachweis" bioc:stroke="#E65100" bioc:fill="#FFE0B2" color:background-color="#FFE0B2" color:border-color="#E65100"><dc:Bounds x="450" y="140" width="140" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="S_Nachweis_di" bpmnElement="S_Nachweis" bioc:stroke="#616161" bioc:fill="#E0E0E0" color:background-color="#E0E0E0" color:border-color="#616161"><dc:Bounds x="450" y="140" width="140" height="80" /></bpmndi:BPMNShape>
 <bpmndi:BPMNShape id="T_Mitteilen_di" bpmnElement="T_Mitteilen"><dc:Bounds x="630" y="140" width="140" height="80" /></bpmndi:BPMNShape>
 <bpmndi:BPMNShape id="End_di" bpmnElement="End"><dc:Bounds x="822" y="162" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="800" y="202" width="80" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
 <bpmndi:BPMNEdge id="F1_di" bpmnElement="F1"><di:waypoint x="223" y="180" /><di:waypoint x="270" y="180" /></bpmndi:BPMNEdge>
