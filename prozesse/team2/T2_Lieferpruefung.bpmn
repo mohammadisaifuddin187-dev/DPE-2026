@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- KI-generiert (Claude, Anthropic) - Beginn. Team 2 Materialversorgung, Pflege-Backoffice MVP, DPE WS 2026/27 (Prof. Stiehl). Verantwortlich im Team: offen (Team 2 legt fest). Lizenz: MIT. -->
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" xmlns:color="http://www.omg.org/spec/BPMN/non-normative/color/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_T2_Lieferpruefung" targetNamespace="http://thi.de/dpe/team2" exporter="Team 2 (KI-unterstützt)" exporterVersion="1.0">
+<bpmn:collaboration id="Collab_T2_Lieferpruefung">
+<bpmn:participant id="P_Lieferant" name="Lieferant (simuliert)" />
+<bpmn:participant id="P_Lieferpruefung" name="Lieferprüfung" processRef="T2_Lieferpruefung" />
+<bpmn:participant id="P_Team3" name="Team 3 - Kommunikation, Fristen, Nachfassen" />
+<bpmn:messageFlow id="M01" name="Versandmeldung" sourceRef="P_Lieferant" targetRef="R_Versand" />
+<bpmn:messageFlow id="M02" name="Klärungsauftrag" sourceRef="S_Klaerung" targetRef="P_Team3" />
+<bpmn:messageFlow id="M03" name="Klärungsergebnis" sourceRef="P_Team3" targetRef="C_Klaerung" />
+</bpmn:collaboration>
+<bpmn:process id="T2_Lieferpruefung" name="Lieferprüfung" isExecutable="true" camunda:historyTimeToLive="P180D">
+<bpmn:documentation>Teilprozess zu Schritt 9 (Versand und Frist überwachen) und 10 (Lieferung bestätigen oder Abweichung bearbeiten). Ausnahmen: Teil-/Falschlieferung, Lieferung bleibt unbestätigt - nie automatisch erfolgreich schließen.</bpmn:documentation>
+<bpmn:startEvent id="Start" name="Bestellung bestätigt"><bpmn:outgoing>F01</bpmn:outgoing></bpmn:startEvent>
+<bpmn:receiveTask id="R_Versand" name="Versandmeldung empfangen" messageRef="Msg_Versandmeldung"><bpmn:documentation>Lieferant meldet Versand und erwartetes Lieferdatum (über Camel an den Prozess).</bpmn:documentation><bpmn:incoming>F01</bpmn:incoming><bpmn:outgoing>F02</bpmn:outgoing></bpmn:receiveTask>
+<bpmn:boundaryEvent id="B_Versand" name="Versandfrist abgelaufen (5 Tage)" attachedToRef="R_Versand"><bpmn:documentation>Projektannahme (nicht von Stiehl vorgegeben, im Integrationskreis bestätigen): Versandfrist 5 Tage.</bpmn:documentation><bpmn:outgoing>F06</bpmn:outgoing><bpmn:timerEventDefinition id="B_Versand_Def"><bpmn:timeDuration xsi:type="bpmn:tFormalExpression">P5D</bpmn:timeDuration></bpmn:timerEventDefinition></bpmn:boundaryEvent>
+<bpmn:userTask id="UT_Lieferung" name="Lieferung prüfen" camunda:candidateGroups="pflegeperson"><bpmn:documentation>Anlass: Versand gemeldet. Benötigt: erwarteter Inhalt und Liefertermin. Rolle: Pflegeperson. Ergebnis: richtig, teilweise, falsch oder nicht geliefert (mit Abweichung). Frist: 3 Tage.</bpmn:documentation><bpmn:extensionElements><camunda:formData><camunda:formField id="lieferbefund" label="Befund" type="enum"><camunda:validation><camunda:constraint name="required" /></camunda:validation><camunda:value id="RICHTIG" name="Richtig geliefert" /><camunda:value id="TEILWEISE" name="Teilweise geliefert" /><camunda:value id="FALSCH" name="Falsch geliefert / beanstandet" /><camunda:value id="NICHT_GELIEFERT" name="Nicht geliefert" /></camunda:formField><camunda:formField id="gelieferteMenge" label="Gelieferte Menge" type="long"></camunda:formField><camunda:formField id="abweichungBeschreibung" label="Beschreibung der Abweichung" type="string"></camunda:formField></camunda:formData></bpmn:extensionElements><bpmn:incoming>F02</bpmn:incoming><bpmn:outgoing>F03</bpmn:outgoing></bpmn:userTask>
+<bpmn:boundaryEvent id="B_Bestaetigung" name="Bestätigungsfrist abgelaufen (3 Tage)" attachedToRef="UT_Lieferung"><bpmn:documentation>Projektannahme (nicht von Stiehl vorgegeben, im Integrationskreis bestätigen): Bestätigungsfrist 3 Tage.</bpmn:documentation><bpmn:outgoing>F07</bpmn:outgoing><bpmn:timerEventDefinition id="B_Bestaetigung_Def"><bpmn:timeDuration xsi:type="bpmn:tFormalExpression">P3D</bpmn:timeDuration></bpmn:timerEventDefinition></bpmn:boundaryEvent>
+<bpmn:exclusiveGateway id="GW_Korrekt" name="Lieferung korrekt?"><bpmn:incoming>F03</bpmn:incoming><bpmn:outgoing>F04</bpmn:outgoing><bpmn:outgoing>F05</bpmn:outgoing></bpmn:exclusiveGateway>
+<bpmn:endEvent id="End_Abgeschlossen" name="Lieferung abgeschlossen"><bpmn:extensionElements><camunda:executionListener expression="${execution.setVariable('lieferpruefungErgebnis', 'Lieferung abgeschlossen')}" event="start" /></bpmn:extensionElements><bpmn:incoming>F04</bpmn:incoming><bpmn:incoming>F11</bpmn:incoming></bpmn:endEvent>
+<bpmn:exclusiveGateway id="GW_Klaerung" name=""><bpmn:incoming>F05</bpmn:incoming><bpmn:incoming>F06</bpmn:incoming><bpmn:incoming>F07</bpmn:incoming><bpmn:outgoing>F08</bpmn:outgoing></bpmn:exclusiveGateway>
+<bpmn:sendTask id="S_Klaerung" name="Klärung beauftragen" camunda:type="external" camunda:topic="t2-klaerung-beauftragen"><bpmn:documentation>Abweichung erfassen, Gegenstelle über den Kommunikationsbaustein von Team 3 kontaktieren; Status bleibt offen.</bpmn:documentation><bpmn:incoming>F08</bpmn:incoming><bpmn:outgoing>F09</bpmn:outgoing></bpmn:sendTask>
+<bpmn:intermediateCatchEvent id="C_Klaerung" name="Klärungsergebnis empfangen"><bpmn:documentation>Team 3 meldet Antwort, Zeitüberschreitung oder dokumentierten Abbruch (Fristen führt Team 3).</bpmn:documentation><bpmn:incoming>F09</bpmn:incoming><bpmn:outgoing>F10</bpmn:outgoing><bpmn:messageEventDefinition id="C_Klaerung_Def" messageRef="Msg_Klaerungsergebnis" /></bpmn:intermediateCatchEvent>
+<bpmn:exclusiveGateway id="GW_Geklaert" name="Abweichung geklärt?"><bpmn:incoming>F10</bpmn:incoming><bpmn:outgoing>F11</bpmn:outgoing><bpmn:outgoing>F12</bpmn:outgoing></bpmn:exclusiveGateway>
+<bpmn:serviceTask id="T_Uebergeben" name="Klärungsfall übergeben" camunda:type="external" camunda:topic="t2-klaerungsfall-uebergeben"><bpmn:documentation>Übergabe an die menschliche Prüfstelle mit dokumentiertem Grund (Zustand: Übergeben).</bpmn:documentation><bpmn:incoming>F12</bpmn:incoming><bpmn:outgoing>F13</bpmn:outgoing></bpmn:serviceTask>
+<bpmn:endEvent id="End_Ungeklaert" name="Lieferung ungeklärt"><bpmn:extensionElements><camunda:executionListener expression="${execution.setVariable('lieferpruefungErgebnis', 'Lieferung ungeklärt')}" event="start" /></bpmn:extensionElements><bpmn:incoming>F13</bpmn:incoming></bpmn:endEvent>
+<bpmn:sequenceFlow id="F01" sourceRef="Start" targetRef="R_Versand"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="F02" sourceRef="R_Versand" targetRef="UT_Lieferung"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="F03" sourceRef="UT_Lieferung" targetRef="GW_Korrekt"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="F04" sourceRef="GW_Korrekt" targetRef="End_Abgeschlossen" name="Richtig geliefert"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${lieferbefund == 'RICHTIG'}</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="F05" sourceRef="GW_Korrekt" targetRef="GW_Klaerung" name="Abweichung festgestellt"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${lieferbefund != 'RICHTIG'}</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="F06" sourceRef="B_Versand" targetRef="GW_Klaerung"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="F07" sourceRef="B_Bestaetigung" targetRef="GW_Klaerung"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="F08" sourceRef="GW_Klaerung" targetRef="S_Klaerung"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="F09" sourceRef="S_Klaerung" targetRef="C_Klaerung"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="F10" sourceRef="C_Klaerung" targetRef="GW_Geklaert"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="F11" sourceRef="GW_Geklaert" targetRef="End_Abgeschlossen" name="Geklärt"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${klaerungsergebnis == 'GEKLAERT'}</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="F12" sourceRef="GW_Geklaert" targetRef="T_Uebergeben" name="Nicht geklärt"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${klaerungsergebnis != 'GEKLAERT'}</bpmn:conditionExpression></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="F13" sourceRef="T_Uebergeben" targetRef="End_Ungeklaert"></bpmn:sequenceFlow>
+</bpmn:process>
+<bpmn:message id="Msg_Versandmeldung" name="Lieferant_Versandmeldung_Team2" />
+<bpmn:message id="Msg_Klaerungsergebnis" name="Team3_Klaerungsergebnis_Team2" />
+<bpmndi:BPMNDiagram id="BPMNDiagram_1"><bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collab_T2_Lieferpruefung">
+<bpmndi:BPMNShape id="P_Lieferant_di" bpmnElement="P_Lieferant" isHorizontal="true"><dc:Bounds x="120" y="20" width="1260" height="60" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="P_Lieferpruefung_di" bpmnElement="P_Lieferpruefung" isHorizontal="true"><dc:Bounds x="120" y="120" width="1260" height="380" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="P_Team3_di" bpmnElement="P_Team3" isHorizontal="true"><dc:Bounds x="120" y="550" width="1260" height="60" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Start_di" bpmnElement="Start"><dc:Bounds x="187" y="212" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="160" y="252" width="90" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="R_Versand_di" bpmnElement="R_Versand" bioc:stroke="#E65100" bioc:fill="#FFE0B2" color:background-color="#FFE0B2" color:border-color="#E65100"><dc:Bounds x="260" y="190" width="140" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="B_Versand_di" bpmnElement="B_Versand"><dc:Bounds x="282" y="252" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="196" y="288" width="100" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="UT_Lieferung_di" bpmnElement="UT_Lieferung"><dc:Bounds x="440" y="190" width="140" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="B_Bestaetigung_di" bpmnElement="B_Bestaetigung"><dc:Bounds x="522" y="252" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="550" y="280" width="100" height="42" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="GW_Korrekt_di" bpmnElement="GW_Korrekt" isMarkerVisible="true"><dc:Bounds x="635" y="205" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="620" y="173" width="80" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="End_Abgeschlossen_di" bpmnElement="End_Abgeschlossen"><dc:Bounds x="982" y="212" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1024" y="216" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="GW_Klaerung_di" bpmnElement="GW_Klaerung" isMarkerVisible="true"><dc:Bounds x="635" y="335" width="50" height="50" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="S_Klaerung_di" bpmnElement="S_Klaerung" bioc:stroke="#E65100" bioc:fill="#FFE0B2" color:background-color="#FFE0B2" color:border-color="#E65100"><dc:Bounds x="720" y="320" width="140" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="C_Klaerung_di" bpmnElement="C_Klaerung" bioc:stroke="#E65100" bioc:fill="#FFE0B2" color:background-color="#FFE0B2" color:border-color="#E65100"><dc:Bounds x="902" y="342" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="866" y="310" width="100" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="GW_Geklaert_di" bpmnElement="GW_Geklaert" isMarkerVisible="true"><dc:Bounds x="975" y="335" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="960" y="389" width="80" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="T_Uebergeben_di" bpmnElement="T_Uebergeben"><dc:Bounds x="1100" y="320" width="140" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="End_Ungeklaert_di" bpmnElement="End_Ungeklaert"><dc:Bounds x="1292" y="342" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1270" y="382" width="80" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNEdge id="F01_di" bpmnElement="F01"><di:waypoint x="223" y="230" /><di:waypoint x="260" y="230" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F02_di" bpmnElement="F02"><di:waypoint x="400" y="230" /><di:waypoint x="440" y="230" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F03_di" bpmnElement="F03"><di:waypoint x="580" y="230" /><di:waypoint x="635" y="230" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F04_di" bpmnElement="F04"><di:waypoint x="685" y="230" /><di:waypoint x="982" y="230" /><bpmndi:BPMNLabel><dc:Bounds x="700" y="210" width="90" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F05_di" bpmnElement="F05"><di:waypoint x="660" y="255" /><di:waypoint x="660" y="335" /><bpmndi:BPMNLabel><dc:Bounds x="668" y="290" width="70" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F06_di" bpmnElement="F06"><di:waypoint x="300" y="288" /><di:waypoint x="300" y="450" /><di:waypoint x="660" y="450" /><di:waypoint x="660" y="385" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F07_di" bpmnElement="F07"><di:waypoint x="540" y="288" /><di:waypoint x="540" y="360" /><di:waypoint x="635" y="360" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F08_di" bpmnElement="F08"><di:waypoint x="685" y="360" /><di:waypoint x="720" y="360" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F09_di" bpmnElement="F09"><di:waypoint x="860" y="360" /><di:waypoint x="902" y="360" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F10_di" bpmnElement="F10"><di:waypoint x="938" y="360" /><di:waypoint x="975" y="360" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F11_di" bpmnElement="F11"><di:waypoint x="1000" y="335" /><di:waypoint x="1000" y="248" /><bpmndi:BPMNLabel><dc:Bounds x="1008" y="290" width="50" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F12_di" bpmnElement="F12"><di:waypoint x="1025" y="360" /><di:waypoint x="1100" y="360" /><bpmndi:BPMNLabel><dc:Bounds x="1028" y="324" width="60" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F13_di" bpmnElement="F13"><di:waypoint x="1240" y="360" /><di:waypoint x="1292" y="360" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="M01_di" bpmnElement="M01"><di:waypoint x="330" y="80" /><di:waypoint x="330" y="190" /><bpmndi:BPMNLabel><dc:Bounds x="336" y="120" width="80" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="M02_di" bpmnElement="M02"><di:waypoint x="790" y="400" /><di:waypoint x="790" y="550" /><bpmndi:BPMNLabel><dc:Bounds x="720" y="500" width="70" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="M03_di" bpmnElement="M03"><di:waypoint x="920" y="550" /><di:waypoint x="920" y="378" /><bpmndi:BPMNLabel><dc:Bounds x="926" y="500" width="80" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+</bpmndi:BPMNPlane></bpmndi:BPMNDiagram>
+</bpmn:definitions>
+<!-- Ende des KI-generierten Teils -->

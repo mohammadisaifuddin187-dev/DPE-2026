@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- KI-generiert (Claude, Anthropic) - Beginn. Team 2 Materialversorgung, Pflege-Backoffice MVP, DPE WS 2026/27 (Prof. Stiehl). Verantwortlich im Team: offen (Team 2 legt fest). Lizenz: MIT. -->
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" xmlns:color="http://www.omg.org/spec/BPMN/non-normative/color/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_T2_Bestandsabfrage" targetNamespace="http://thi.de/dpe/team2" exporter="Team 2 (KI-unterstützt)" exporterVersion="1.0">
+<bpmn:collaboration id="Collab_T2_Bestandsabfrage">
+<bpmn:participant id="P_Bestandsabfrage" name="Bestandsabfrage" processRef="T2_Bestandsabfrage" />
+</bpmn:collaboration>
+<bpmn:process id="T2_Bestandsabfrage" name="Bestandsabfrage" isExecutable="true" camunda:historyTimeToLive="P180D">
+<bpmn:documentation>Teilprozess zu Schritt 1 (Bestand prüfen) inkl. Ausnahme "Bestand nicht gemeldet": gezielte Erinnerung (nicht unterbrechender Timer). Die endgültige Meldefrist liegt als unterbrechender Timer an der Call Activity im Hauptprozess (Muster: Erinnern an der Aufgabe, Frist am Teilprozess).</bpmn:documentation>
+<bpmn:laneSet id="T2_Bestandsabfrage_LaneSet">
+<bpmn:lane id="Lane_Backoffice" name="Pflege-Backoffice"><bpmn:flowNodeRef>Start</bpmn:flowNodeRef><bpmn:flowNodeRef>T_Anfragen</bpmn:flowNodeRef><bpmn:flowNodeRef>T_Erinnern</bpmn:flowNodeRef><bpmn:flowNodeRef>End_Erinnert</bpmn:flowNodeRef></bpmn:lane>
+<bpmn:lane id="Lane_Pflegeperson" name="Pflegeperson"><bpmn:flowNodeRef>UT_Melden</bpmn:flowNodeRef><bpmn:flowNodeRef>B_Erinnerung</bpmn:flowNodeRef><bpmn:flowNodeRef>End_Gemeldet</bpmn:flowNodeRef></bpmn:lane>
+</bpmn:laneSet>
+<bpmn:startEvent id="Start" name="Prüftermin erreicht"><bpmn:outgoing>F1</bpmn:outgoing></bpmn:startEvent>
+<bpmn:serviceTask id="T_Anfragen" name="Bestand anfragen" camunda:type="external" camunda:topic="t2-benachrichtigung"><bpmn:documentation>Gemeinsame Benachrichtigungsfunktion (Team 2): Pflegeperson um aktuelle Bestandsmeldung bitten.</bpmn:documentation><bpmn:extensionElements><camunda:inputOutput><camunda:inputParameter name="vorlage">BESTANDSANFRAGE</camunda:inputParameter></camunda:inputOutput></bpmn:extensionElements><bpmn:incoming>F1</bpmn:incoming><bpmn:outgoing>F2</bpmn:outgoing></bpmn:serviceTask>
+<bpmn:userTask id="UT_Melden" name="Bestand melden" camunda:candidateGroups="pflegeperson"><bpmn:documentation>Anlass: geplanter Prüftermin. Benötigt: Produkt, letzter bekannter Bestand. Rolle: Pflegeperson. Ergebnis: Menge und Zeitpunkt. Erinnerung nach 1 Tag, endgültige Frist 3 Tage (Hauptprozess). Projektannahme (nicht von Stiehl vorgegeben, im Integrationskreis bestätigen):</bpmn:documentation><bpmn:extensionElements><camunda:formData><camunda:formField id="bestandMenge" label="Aktueller Bestand (Stück)" type="long"><camunda:validation><camunda:constraint name="required" /></camunda:validation></camunda:formField><camunda:formField id="bestandZeitpunkt" label="Zeitpunkt der Zählung" type="date"><camunda:validation><camunda:constraint name="required" /></camunda:validation></camunda:formField><camunda:formField id="bestandHinweis" label="Hinweis / Unsicherheit" type="string"></camunda:formField></camunda:formData></bpmn:extensionElements><bpmn:incoming>F2</bpmn:incoming><bpmn:outgoing>F3</bpmn:outgoing></bpmn:userTask>
+<bpmn:boundaryEvent id="B_Erinnerung" name="Erinnerung fällig (1 Tag)" attachedToRef="UT_Melden" cancelActivity="false"><bpmn:documentation>Projektannahme (nicht von Stiehl vorgegeben, im Integrationskreis bestätigen): Erinnerung nach 1 Tag.</bpmn:documentation><bpmn:outgoing>F4</bpmn:outgoing><bpmn:timerEventDefinition id="B_Erinnerung_Def"><bpmn:timeDuration xsi:type="bpmn:tFormalExpression">P1D</bpmn:timeDuration></bpmn:timerEventDefinition></bpmn:boundaryEvent>
+<bpmn:serviceTask id="T_Erinnern" name="An Bestandsmeldung erinnern" camunda:type="external" camunda:topic="t2-benachrichtigung"><bpmn:extensionElements><camunda:inputOutput><camunda:inputParameter name="vorlage">BESTANDSERINNERUNG</camunda:inputParameter></camunda:inputOutput></bpmn:extensionElements><bpmn:incoming>F4</bpmn:incoming><bpmn:outgoing>F5</bpmn:outgoing></bpmn:serviceTask>
+<bpmn:endEvent id="End_Erinnert" name="Erinnerung gesendet"><bpmn:incoming>F5</bpmn:incoming></bpmn:endEvent>
+<bpmn:endEvent id="End_Gemeldet" name="Bestand gemeldet"><bpmn:incoming>F3</bpmn:incoming></bpmn:endEvent>
+<bpmn:sequenceFlow id="F1" sourceRef="Start" targetRef="T_Anfragen"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="F2" sourceRef="T_Anfragen" targetRef="UT_Melden"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="F3" sourceRef="UT_Melden" targetRef="End_Gemeldet"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="F4" sourceRef="B_Erinnerung" targetRef="T_Erinnern"></bpmn:sequenceFlow>
+<bpmn:sequenceFlow id="F5" sourceRef="T_Erinnern" targetRef="End_Erinnert"></bpmn:sequenceFlow>
+</bpmn:process>
+<bpmndi:BPMNDiagram id="BPMNDiagram_1"><bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collab_T2_Bestandsabfrage">
+<bpmndi:BPMNShape id="P_Bestandsabfrage_di" bpmnElement="P_Bestandsabfrage" isHorizontal="true"><dc:Bounds x="60" y="80" width="750" height="340" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Lane_Backoffice_di" bpmnElement="Lane_Backoffice" isHorizontal="true"><dc:Bounds x="90" y="80" width="720" height="180" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Lane_Pflegeperson_di" bpmnElement="Lane_Pflegeperson" isHorizontal="true"><dc:Bounds x="90" y="260" width="720" height="160" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Start_di" bpmnElement="Start"><dc:Bounds x="172" y="162" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="145" y="202" width="90" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="T_Anfragen_di" bpmnElement="T_Anfragen"><dc:Bounds x="260" y="140" width="140" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="UT_Melden_di" bpmnElement="UT_Melden"><dc:Bounds x="430" y="295" width="140" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="B_Erinnerung_di" bpmnElement="B_Erinnerung"><dc:Bounds x="512" y="277" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="400" y="240" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="T_Erinnern_di" bpmnElement="T_Erinnern"><dc:Bounds x="460" y="140" width="140" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="End_Erinnert_di" bpmnElement="End_Erinnert"><dc:Bounds x="672" y="162" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="650" y="202" width="80" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="End_Gemeldet_di" bpmnElement="End_Gemeldet"><dc:Bounds x="672" y="317" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="650" y="357" width="80" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNEdge id="F1_di" bpmnElement="F1"><di:waypoint x="208" y="180" /><di:waypoint x="260" y="180" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F2_di" bpmnElement="F2"><di:waypoint x="330" y="220" /><di:waypoint x="330" y="335" /><di:waypoint x="430" y="335" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F3_di" bpmnElement="F3"><di:waypoint x="570" y="335" /><di:waypoint x="672" y="335" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F4_di" bpmnElement="F4"><di:waypoint x="530" y="277" /><di:waypoint x="530" y="220" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="F5_di" bpmnElement="F5"><di:waypoint x="600" y="180" /><di:waypoint x="672" y="180" /></bpmndi:BPMNEdge>
+</bpmndi:BPMNPlane></bpmndi:BPMNDiagram>
+</bpmn:definitions>
+<!-- Ende des KI-generierten Teils -->
