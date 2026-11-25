@@ -58,17 +58,17 @@
 <bpmndi:BPMNShape id="P_Lieferpruefung_di" bpmnElement="P_Lieferpruefung" isHorizontal="true"><dc:Bounds x="120" y="160" width="1560" height="400" /></bpmndi:BPMNShape>
 <bpmndi:BPMNShape id="P_Team3_di" bpmnElement="P_Team3" isHorizontal="true"><dc:Bounds x="120" y="610" width="1560" height="60" /></bpmndi:BPMNShape>
 <bpmndi:BPMNShape id="Start_di" bpmnElement="Start"><dc:Bounds x="187" y="262" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="160" y="302" width="90" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="R_Versand_di" bpmnElement="R_Versand" bioc:stroke="#616161" bioc:fill="#E0E0E0" color:background-color="#E0E0E0" color:border-color="#616161"><dc:Bounds x="260" y="240" width="140" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="R_Versand_di" bpmnElement="R_Versand"><dc:Bounds x="260" y="240" width="140" height="80" /></bpmndi:BPMNShape>
 <bpmndi:BPMNShape id="B_Versand_di" bpmnElement="B_Versand"><dc:Bounds x="282" y="302" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="196" y="330" width="96" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="S_Anfrage_di" bpmnElement="S_Anfrage" bioc:stroke="#616161" bioc:fill="#E0E0E0" color:background-color="#E0E0E0" color:border-color="#616161"><dc:Bounds x="420" y="240" width="140" height="80" /></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="R_Bestaetigung_di" bpmnElement="R_Bestaetigung" bioc:stroke="#616161" bioc:fill="#E0E0E0" color:background-color="#E0E0E0" color:border-color="#616161"><dc:Bounds x="580" y="240" width="140" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="S_Anfrage_di" bpmnElement="S_Anfrage"><dc:Bounds x="420" y="240" width="140" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="R_Bestaetigung_di" bpmnElement="R_Bestaetigung"><dc:Bounds x="580" y="240" width="140" height="80" /></bpmndi:BPMNShape>
 <bpmndi:BPMNShape id="B_Bestaetigung_di" bpmnElement="B_Bestaetigung"><dc:Bounds x="662" y="302" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="690" y="330" width="90" height="42" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
 <bpmndi:BPMNShape id="GW_Korrekt_di" bpmnElement="GW_Korrekt" isMarkerVisible="true"><dc:Bounds x="775" y="255" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="760" y="223" width="80" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
 <bpmndi:BPMNShape id="XOR_Ab_di" bpmnElement="XOR_Ab" isMarkerVisible="true"><dc:Bounds x="1175" y="255" width="50" height="50" /></bpmndi:BPMNShape>
 <bpmndi:BPMNShape id="End_Abgeschlossen_di" bpmnElement="End_Abgeschlossen"><dc:Bounds x="1272" y="262" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1314" y="266" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
 <bpmndi:BPMNShape id="GW_Klaerung_di" bpmnElement="GW_Klaerung" isMarkerVisible="true"><dc:Bounds x="775" y="385" width="50" height="50" /></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="S_Klaerung_di" bpmnElement="S_Klaerung" bioc:stroke="#616161" bioc:fill="#E0E0E0" color:background-color="#E0E0E0" color:border-color="#616161"><dc:Bounds x="850" y="370" width="140" height="80" /></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="R_Klaerung_di" bpmnElement="R_Klaerung" bioc:stroke="#616161" bioc:fill="#E0E0E0" color:background-color="#E0E0E0" color:border-color="#616161"><dc:Bounds x="1010" y="370" width="140" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="S_Klaerung_di" bpmnElement="S_Klaerung"><dc:Bounds x="850" y="370" width="140" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="R_Klaerung_di" bpmnElement="R_Klaerung"><dc:Bounds x="1010" y="370" width="140" height="80" /></bpmndi:BPMNShape>
 <bpmndi:BPMNShape id="B_Klaerung_di" bpmnElement="B_Klaerung"><dc:Bounds x="1092" y="432" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1120" y="460" width="90" height="42" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
 <bpmndi:BPMNShape id="GW_Geklaert_di" bpmnElement="GW_Geklaert" isMarkerVisible="true"><dc:Bounds x="1175" y="385" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="1108" y="350" width="86" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
 <bpmndi:BPMNShape id="XOR_Ue_di" bpmnElement="XOR_Ue" isMarkerVisible="true"><dc:Bounds x="1315" y="385" width="50" height="50" /></bpmndi:BPMNShape>

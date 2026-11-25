@@ -44,12 +44,12 @@
 <bpmndi:BPMNShape id="P_Kundenentscheidung_di" bpmnElement="P_Kundenentscheidung" isHorizontal="true"><dc:Bounds x="60" y="100" width="960" height="520" /></bpmndi:BPMNShape>
 <bpmndi:BPMNShape id="P_Team3_di" bpmnElement="P_Team3" isHorizontal="true"><dc:Bounds x="60" y="660" width="960" height="60" /></bpmndi:BPMNShape>
 <bpmndi:BPMNShape id="Start_di" bpmnElement="Start"><dc:Bounds x="152" y="282" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="125" y="322" width="90" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="S_Anfrage_di" bpmnElement="S_Anfrage" bioc:stroke="#616161" bioc:fill="#E0E0E0" color:background-color="#E0E0E0" color:border-color="#616161"><dc:Bounds x="230" y="260" width="140" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="S_Anfrage_di" bpmnElement="S_Anfrage"><dc:Bounds x="230" y="260" width="140" height="80" /></bpmndi:BPMNShape>
 <bpmndi:BPMNShape id="XOR_W_di" bpmnElement="XOR_W" isMarkerVisible="true"><dc:Bounds x="405" y="275" width="50" height="50" /></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="R_Entscheidung_di" bpmnElement="R_Entscheidung" bioc:stroke="#616161" bioc:fill="#E0E0E0" color:background-color="#E0E0E0" color:border-color="#616161"><dc:Bounds x="490" y="260" width="140" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="R_Entscheidung_di" bpmnElement="R_Entscheidung"><dc:Bounds x="490" y="260" width="140" height="80" /></bpmndi:BPMNShape>
 <bpmndi:BPMNShape id="B_Frist_di" bpmnElement="B_Frist"><dc:Bounds x="542" y="322" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="456" y="350" width="96" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
 <bpmndi:BPMNShape id="GW_Nach_di" bpmnElement="GW_Nach" isMarkerVisible="true"><dc:Bounds x="535" y="415" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="456" y="452" width="90" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
-<bpmndi:BPMNShape id="S_Nachfassen_di" bpmnElement="S_Nachfassen" bioc:stroke="#616161" bioc:fill="#E0E0E0" color:background-color="#E0E0E0" color:border-color="#616161"><dc:Bounds x="490" y="500" width="140" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="S_Nachfassen_di" bpmnElement="S_Nachfassen"><dc:Bounds x="490" y="500" width="140" height="80" /></bpmndi:BPMNShape>
 <bpmndi:BPMNShape id="GW_E_di" bpmnElement="GW_E" isMarkerVisible="true"><dc:Bounds x="695" y="275" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="640" y="262" width="70" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
 <bpmndi:BPMNShape id="End_Aenderung_di" bpmnElement="End_Aenderung"><dc:Bounds x="852" y="172" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="894" y="183" width="108" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
 <bpmndi:BPMNShape id="End_Aufgeschoben_di" bpmnElement="End_Aufgeschoben"><dc:Bounds x="852" y="232" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="894" y="243" width="80" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
